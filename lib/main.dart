@@ -1,8 +1,8 @@
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:uber_app_flutter/src/feature/scanner/ui/scanner_screen.dart';
-import 'package:uber_app_flutter/src/util/modules/modules.dart';
+import 'package:uber_app_flutter/src/core/util/modules/modules.dart';
+import 'package:uber_app_flutter/src/presentation/feature/scanner/pages/scanner_page.dart';
 
 void main() {
   Fimber.plantTree(DebugTree());
@@ -19,6 +19,6 @@ class SplashScreen extends StatelessWidget {
         body: Center(
             child: ElevatedButton(
                 child: const Text("Go to Scanner"),
-                onPressed: () => {Get.to(ScannerScreen())})));
+                onPressed: () => {Get.to(ScannerPage())})));
   }
 }

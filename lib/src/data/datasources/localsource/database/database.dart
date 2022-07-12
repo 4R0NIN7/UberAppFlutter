@@ -4,12 +4,12 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:uber_app_flutter/src/database/data/characteristics_entity.dart';
-import 'package:uber_app_flutter/src/database/database_const.dart';
-import 'package:uber_app_flutter/src/feature/deviceDetails/data/device_reading.dart';
-import 'package:uber_app_flutter/src/util/functions.dart';
+import 'package:uber_app_flutter/src/core/util/functions.dart';
 
+import '../../../entities/device_reading.dart';
+import 'data/characteristics_entity.dart';
 import 'data/reading_entity.dart';
+import 'database_const.dart';
 
 part 'database.g.dart';
 

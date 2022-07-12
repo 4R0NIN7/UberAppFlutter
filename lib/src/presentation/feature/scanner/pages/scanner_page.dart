@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
-import 'package:uber_app_flutter/src/feature/scanner/controller/scanner_controller.dart';
 
-import '../../../values/ui_values.dart';
-import '../../deviceDetails/ui/device_details_screen.dart';
+import '../../../../core/values/ui_values.dart';
+import '../../deviceDetails/pages/device_details_screen.dart';
+import '../controller/scanner_controller.dart';
 
-class ScannerScreen extends StatelessWidget {
-  ScannerScreen({Key? key}) : super(key: key);
+class ScannerPage extends StatelessWidget {
+  ScannerPage({Key? key}) : super(key: key);
   final scannerController = Get.find<ScannerController>();
 
   @override

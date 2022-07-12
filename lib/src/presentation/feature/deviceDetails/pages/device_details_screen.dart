@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
-import 'package:uber_app_flutter/src/feature/deviceDetails/data/characteristics.dart';
-import 'package:uber_app_flutter/src/util/functions.dart';
-import 'package:uber_app_flutter/src/values/ui_values.dart';
+import 'package:uber_app_flutter/src/core/util/functions.dart';
+import 'package:uber_app_flutter/src/core/values/ui_values.dart';
 
+import '../../../../data/entities/characteristics.dart';
 import '../controller/device_details_controller.dart';
 
 class DetailsScreen extends StatelessWidget {

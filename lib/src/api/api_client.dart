@@ -1,4 +1,4 @@
-import 'package:uber_app_flutter/src/database/database.dart';
+import '../data/datasources/localsource/database/database.dart';
 
 class FakeApiClient {
   Future<String> sendData(List<ReadingEntityData> list) async {

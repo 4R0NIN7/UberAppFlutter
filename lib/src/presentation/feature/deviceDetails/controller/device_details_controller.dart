@@ -2,12 +2,12 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
 import 'package:uber_app_flutter/proto/Readings.pb.dart';
-import 'package:uber_app_flutter/src/feature/deviceDetails/controller/repository/reading_repository.dart';
-import 'package:uber_app_flutter/src/feature/deviceDetails/data/characteristics.dart';
-import 'package:uber_app_flutter/src/feature/deviceDetails/data/device_reading.dart';
-import 'package:uber_app_flutter/src/util/functions.dart';
 
-import '../../../util/dateManagement/time_manager.dart';
+import '../../../../core/util/dateManagement/time_manager.dart';
+import '../../../../core/util/functions.dart';
+import '../../../../data/entities/characteristics.dart';
+import '../../../../data/entities/device_reading.dart';
+import '../../../../domain/repositories/reading_repository.dart';
 
 class DeviceDetailsController extends GetxController {
   final _bleClient = Get.find<FlutterReactiveBle>(tag: 'BleClient');
@@ -50,7 +50,8 @@ class DeviceDetailsController extends GetxController {
       prescanDuration: const Duration(seconds: 5),
       servicesWithCharacteristicsToDiscover: {},
       connectionTimeout: const Duration(seconds: 2),
-    ).listen((connectionState) {
+    )
+        .listen((connectionState) {
       switch (connectionState.connectionState) {
         case DeviceConnectionState.connecting:
           {
