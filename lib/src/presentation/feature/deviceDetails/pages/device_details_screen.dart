@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
-import 'package:uber_app_flutter/src/feature/deviceDetails/data/characteristics.dart';
-import 'package:uber_app_flutter/src/util/functions.dart';
-import 'package:uber_app_flutter/src/values/ui_values.dart';
+import 'package:uber_app_flutter/src/core/util/functions.dart';
+import 'package:uber_app_flutter/src/core/values/ui_values.dart';
 
+import '../../../../domain/entities/characteristics.dart';
 import '../controller/device_details_controller.dart';
 
 class DetailsScreen extends StatelessWidget {
-  const DetailsScreen({
-    Key? key,
-    required this.device,
-  }) : super(key: key);
-  final DiscoveredDevice device;
-
+  DetailsScreen({Key? key}) : super(key: key);
+  final deviceDetailsController = Get.find<DeviceDetailsController>();
   @override
   Widget build(BuildContext context) {
-    final deviceDetailsController = Get.put(DeviceDetailsController(device));
     return MaterialApp(
         home: DefaultTabController(
             length: 3,
@@ -29,7 +23,7 @@ class DetailsScreen extends StatelessWidget {
   AppBar _tabAppBar() {
     return AppBar(
         backgroundColor: Colors.deepPurpleAccent,
-        title: Text("Connected device ${device.name}"),
+        title: Text("Connected device ${deviceDetailsController}"),
         bottom: const TabBar(tabs: [
           Tab(icon: Icon(Icons.on_device_training)),
           Tab(icon: Icon(Icons.area_chart)),
