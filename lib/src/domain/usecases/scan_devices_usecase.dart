@@ -5,10 +5,11 @@ import 'package:uber_app_flutter/src/core/usecase/usecase.dart';
 
 import '../repositories/scanning_repository.dart';
 
-class ScanDevicesUseCase extends UseCase<Stream<DiscoveredDevice>, void> {
+class StartScanningDevicesUseCase
+    extends UseCase<Stream<DiscoveredDevice>, void> {
   final ScanningRepository _scanningRepository;
 
-  ScanDevicesUseCase(this._scanningRepository);
+  StartScanningDevicesUseCase(this._scanningRepository);
 
   @override
   Either<Failure, Stream<DiscoveredDevice>> invoke({void params}) {

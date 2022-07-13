@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:uber_app_flutter/src/core/util/functions.dart';
 import 'package:uber_app_flutter/src/core/values/ui_values.dart';
 
-import '../../../../data/entities/characteristics.dart';
+import '../../../../domain/entities/characteristics.dart';
 import '../controller/device_details_controller.dart';
 
 class DetailsScreen extends StatelessWidget {
@@ -16,7 +16,8 @@ class DetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final deviceDetailsController = Get.put(DeviceDetailsController(device));
+    final deviceDetailsController =
+        Get.put(DeviceDetailsController(discoveredDevice: device));
     return MaterialApp(
         home: DefaultTabController(
             length: 3,

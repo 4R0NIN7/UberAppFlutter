@@ -1,31 +1,48 @@
 import 'package:fimber/fimber.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
-import 'package:uber_app_flutter/proto/Readings.pb.dart';
+import 'package:uber_app_flutter/src/domain/usecases/connect_to_device_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/get_characteristics_per_day_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/get_count_not_synchronized_readings_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/get_last_reading_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/get_readings_by_day_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/read_data_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/send_data_usecase.dart';
+import 'package:uber_app_flutter/src/domain/usecases/set_date_usecase.dart';
 
-import '../../../../core/util/dateManagement/time_manager.dart';
-import '../../../../core/util/functions.dart';
-import '../../../../data/entities/characteristics.dart';
-import '../../../../data/entities/device_reading.dart';
-import '../../../../domain/repositories/reading_repository.dart';
+import '../../../../domain/entities/characteristics.dart';
+import '../../../../domain/entities/device_reading.dart';
 
 class DeviceDetailsController extends GetxController {
-  final _bleClient = Get.find<FlutterReactiveBle>(tag: 'BleClient');
-  final _timeManager = Get.find<TimeManager>();
-  final _readingRepository = Get.find<ReadingRepository>();
+  final ConnectToDeviceUseCase _connectToDeviceUseCase =
+      Get.find<ConnectToDeviceUseCase>();
+  final SetDateUseCase _setDateUseCase = Get.find<SetDateUseCase>();
+  final ReadDataUseCase _readDataUseCase = Get.find<ReadDataUseCase>();
+  final GetLastReadingUseCase _getLastReadingUseCase =
+      Get.find<GetLastReadingUseCase>();
+  final GetCountNotSynchronizedUseCase _getCountNotSynchronizedUseCase =
+      Get.find<GetCountNotSynchronizedUseCase>();
+  final SendDataUseCase _sendDataUseCase = Get.find<SendDataUseCase>();
+  final GetCharacteristicsPerDay _getCharacteristicsPerDay =
+      Get.find<GetCharacteristicsPerDay>();
+  final GetReadingsByDayUseCase _getReadingsByDayUseCase =
+      Get.find<GetReadingsByDayUseCase>();
+  late final DiscoveredDevice _discoveredDevice;
   final String _dateService = "fd8136b0-f18f-4f36-ad03-c73311525a80";
   final String _dateCharacteristic = "fd8136b1-f18f-4f36-ad03-c73311525a80";
   final String _readingsService = "fd8136c0-f18f-4f36-ad03-c73311525a80";
   final String _readingsCharacteristic = "fd8136c1-f18f-4f36-ad03-c73311525a80";
   final _isConnected = false.obs;
+  final Rxn<ConnectionStateUpdate> _connectionState = Rxn();
   Rxn<DeviceReading> lastReading = Rxn<DeviceReading>();
   Rx<int> countNotSynchronized = Rx<int>(0);
   Rx<List<Characteristics>> characteristicsPerDay =
       Rx<List<Characteristics>>(List.empty());
+  Rx<List<DeviceReading>> readingsByDay = Rx<List<DeviceReading>>(List.empty());
 
-  DiscoveredDevice discoveredDevice;
-
-  DeviceDetailsController(this.discoveredDevice);
+  DeviceDetailsController({required DiscoveredDevice discoveredDevice}) {
+    _discoveredDevice = discoveredDevice;
+  }
 
   @override
   void onInit() {
@@ -42,17 +59,16 @@ class DeviceDetailsController extends GetxController {
     _handleSendingData();
   }
 
-  void _connectToDevice() async {
-    _bleClient
-        .connectToAdvertisingDevice(
-      id: discoveredDevice.id,
-      withServices: [],
-      prescanDuration: const Duration(seconds: 5),
-      servicesWithCharacteristicsToDiscover: {},
-      connectionTimeout: const Duration(seconds: 2),
-    )
-        .listen((connectionState) {
-      switch (connectionState.connectionState) {
+  void _connectToDevice() {
+    _connectToDeviceUseCase.invoke(params: _discoveredDevice).fold(
+        (left) => Fimber.d("_connectToDevice ${left.message}"),
+        (right) => _connectionState.bindStream(right));
+    _handleConnectionState();
+  }
+
+  _handleConnectionState() async {
+    _connectionState.listen((connectionState) async {
+      switch (connectionState!.connectionState) {
         case DeviceConnectionState.connecting:
           {
             Fimber.d("Connecting to device");
@@ -62,7 +78,7 @@ class DeviceDetailsController extends GetxController {
           {
             Fimber.d("Connected to device");
             _isConnected(true);
-            _handleDate();
+            await _handleDate();
             _readData();
             break;
           }
@@ -87,63 +103,29 @@ class DeviceDetailsController extends GetxController {
     final readingsCharacteristic = QualifiedCharacteristic(
         serviceId: Uuid.parse(_readingsService),
         characteristicId: Uuid.parse(_readingsCharacteristic),
-        deviceId: discoveredDevice.id);
-    _bleClient.subscribeToCharacteristic(readingsCharacteristic).listen((data) {
-      final reading = Readings.fromBuffer(data);
-      final deviceReading = DeviceReading(
-          humidity: reading.hummidity,
-          temperature: reading.temperature,
-          readDateTime: _timeManager.getNow(),
-          deviceId: discoveredDevice.id,
-          isSynchronized: false);
-      _readingRepository.insertIntoDatabase(deviceReading);
-    }, onError: (dynamic error) {
-      Fimber.d("Error during readings Error is $error");
-    });
+        deviceId: _discoveredDevice.id);
+    final result = _readDataUseCase.invoke(params: readingsCharacteristic);
+    result.fold((left) => Fimber.d(left.message),
+        (right) => Fimber.d("Subscribed to device successfully"));
   }
 
   Future<void> _handleDate() async {
-    try {
-      final dateCharacteristic = QualifiedCharacteristic(
-          serviceId: Uuid.parse(_dateService),
-          characteristicId: Uuid.parse(_dateCharacteristic),
-          deviceId: discoveredDevice.id);
-      if (_isConnected.isTrue) {
-        final dateFromDeviceBytes =
-            await _bleClient.readCharacteristic(dateCharacteristic);
-        var yearFromBytesToInt =
-            fromBytesToIntYear(dateFromDeviceBytes[3], dateFromDeviceBytes[2]);
-        var dateOnDeviceDateTime = DateTime(
-            yearFromBytesToInt, dateFromDeviceBytes[1], dateFromDeviceBytes[0]);
-        _checkDate(dateOnDeviceDateTime);
-      }
-    } on Exception catch (error) {
-      Fimber.d("Error is $error");
-    }
-  }
-
-  void _checkDate(DateTime dateTimeOnDevice) {
-    var now = _timeManager.getNow();
-    try {
-      if (!now.isSameDate(dateTimeOnDevice)) {
-        var dateToBytes = now.dateToBytes();
-        final characteristic = QualifiedCharacteristic(
-            serviceId: Uuid.parse(_dateService),
-            characteristicId: Uuid.parse(_dateCharacteristic),
-            deviceId: discoveredDevice.id);
-        if (_isConnected.isTrue) {
-          _bleClient.writeCharacteristicWithResponse(characteristic,
-              value: dateToBytes);
-        }
-      }
-    } on Exception catch (error) {
-      Fimber.d("Error is $error");
+    final dateCharacteristic = QualifiedCharacteristic(
+        serviceId: Uuid.parse(_dateService),
+        characteristicId: Uuid.parse(_dateCharacteristic),
+        deviceId: _discoveredDevice.id);
+    if (_isConnected.isTrue) {
+      final result = await _setDateUseCase.invoke(params: dateCharacteristic);
+      result.fold((left) => Fimber.d(left.message),
+          (right) => Fimber.d("Date was set successfully"));
     }
   }
 
   _bindLastReadingStream() {
     try {
-      lastReading.bindStream(_readingRepository.getLastReadingStream());
+      final result = _getLastReadingUseCase.invoke(params: null);
+      result.fold((left) => Fimber.d(left.message),
+          (right) => lastReading.bindStream(right));
     } catch (e) {
       Fimber.d("Error in binding $e");
     }
@@ -151,8 +133,9 @@ class DeviceDetailsController extends GetxController {
 
   _bindCountStream() {
     try {
-      countNotSynchronized
-          .bindStream(_readingRepository.getCountOfNotSynchronizedReadings());
+      final result = _getCountNotSynchronizedUseCase.invoke(params: null);
+      result.fold((left) => Fimber.d(left.message),
+          (right) => countNotSynchronized.bindStream(right));
     } catch (e) {
       Fimber.d("Error in binding $e");
     }
@@ -160,34 +143,34 @@ class DeviceDetailsController extends GetxController {
 
   _bindCharacteristicsStream() {
     try {
-      characteristicsPerDay.bindStream(_readingRepository
-          .getCharacteristicsPerDay()
-          .map((event) => event
-              .map((e) => Characteristics(
-                  averageTemperature: e.averageTemperature,
-                  minimalTemperature: e.minimalTemperature,
-                  maximalTemperature: e.maximalTemperature,
-                  averageHumidity: e.averageHumidity,
-                  minimalHumidity: e.minimalHumidity,
-                  maximalHumidity: e.maximalHumidity,
-                  day: e.dateTimeValue))
-              .toList()));
+      final result = _getCharacteristicsPerDay.invoke(params: null);
+      result.fold((left) => Fimber.d(left.message),
+          (right) => characteristicsPerDay.bindStream(right));
     } catch (e) {
       Fimber.d("Error in binding $e");
     }
   }
 
   getReadingsByDay(DateTime dateTime) {
-    _readingRepository.getDataByDay(dateTime).listen((event) {
+    final result = _getReadingsByDayUseCase.invoke(params: dateTime);
+    result.fold((left) => Fimber.d(left.message),
+        (right) => readingsByDay.bindStream(right));
+    _handleReadingsByDay();
+  }
+
+  _handleReadingsByDay() {
+    readingsByDay.listen((event) {
       Fimber.d("Size is ${event.length}\nValues are $event");
     });
   }
 
-  _handleSendingData() {
-    countNotSynchronized.listen((count) {
+  _handleSendingData() async {
+    countNotSynchronized.listen((count) async {
       Fimber.d("Count is $count");
       if (count >= 20) {
-        _readingRepository.sendData();
+        final result = await _sendDataUseCase.invoke(params: null);
+        result.fold((left) => Fimber.d(left.message),
+            (right) => Fimber.d("Data has been sent"));
       }
     });
   }
