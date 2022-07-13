@@ -4,13 +4,13 @@ import 'package:uber_app_flutter/src/core/failure/failure.dart';
 import 'package:uber_app_flutter/src/core/usecase/usecase.dart';
 import 'package:uber_app_flutter/src/domain/repositories/device_details_repository.dart';
 
-class ReadDataUseCase extends UseCase<void, QualifiedCharacteristic> {
+class ReadDataUseCase extends UseCase<bool, QualifiedCharacteristic> {
   final DeviceDetailsRepository _deviceDetailsRepository;
 
   ReadDataUseCase(this._deviceDetailsRepository);
 
   @override
-  Either<Failure, void> invoke({required QualifiedCharacteristic params}) {
+  Either<Failure, bool> invoke({required QualifiedCharacteristic params}) {
     return _deviceDetailsRepository.readData(params);
   }
 }

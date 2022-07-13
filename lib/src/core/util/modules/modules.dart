@@ -16,6 +16,7 @@ import 'package:uber_app_flutter/src/domain/usecases/set_date_usecase.dart';
 import '../../../data/datasources/localsource/database/database.dart';
 import '../../../domain/repositories/device_details_repository.dart';
 import '../../../domain/usecases/scan_devices_usecase.dart';
+import '../../../presentation/feature/deviceDetails/controller/device_details_controller.dart';
 import '../../../presentation/feature/scanner/controller/scanner_controller.dart';
 import '../dateManagement/time_manager.dart';
 
@@ -25,7 +26,29 @@ class AppBinding implements Bindings {
     _setDependencies();
     _setRepositories();
     _setUseCases();
-    _setControllers();
+    _setScanningController();
+    _setDeviceDetailsController();
+  }
+
+  _setDeviceDetailsController() {
+    final connectToDeviceUseCase = Get.find<ConnectToDeviceUseCase>();
+    final setDateUseCase = Get.find<SetDateUseCase>();
+    final getLastReadingUseCase = Get.find<GetLastReadingUseCase>();
+    final getCountNotSynchronizedUseCase =
+        Get.find<GetCountNotSynchronizedUseCase>();
+    final readDataUseCase = Get.find<ReadDataUseCase>();
+    final sendDataUseCase = Get.find<SendDataUseCase>();
+    final getCharacteristicsPerDay = Get.find<GetCharacteristicsPerDay>();
+    final getReadingsByDayUseCase = Get.find<GetReadingsByDayUseCase>();
+    Get.lazyPut<DeviceDetailsController>(() => DeviceDetailsController(
+        connectToDeviceUseCase: connectToDeviceUseCase,
+        setDateUseCase: setDateUseCase,
+        readDataUseCase: readDataUseCase,
+        getLastReadingUseCase: getLastReadingUseCase,
+        getCountNotSynchronizedUseCase: getCountNotSynchronizedUseCase,
+        sendDataUseCase: sendDataUseCase,
+        getCharacteristicsPerDay: getCharacteristicsPerDay,
+        getReadingsByDayUseCase: getReadingsByDayUseCase));
   }
 
   _setRepositories() {
@@ -33,7 +56,7 @@ class AppBinding implements Bindings {
     Get.lazyPut<DeviceDetailsRepository>(() => DeviceDetailsRepositoryImpl());
   }
 
-  _setControllers() {
+  _setScanningController() {
     final scanDevicesUseCase = Get.find<StartScanningDevicesUseCase>();
     Get.lazyPut<ScannerController>(
         () => ScannerController(scanDevicesUseCase: scanDevicesUseCase));

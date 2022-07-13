@@ -22,7 +22,7 @@ class ScannerPage extends StatelessWidget {
                 if (scannerController.isScanning.isFalse) {
                   scannerController.startScanning();
                 } else {
-                  scannerController.stopScanning();
+                  scannerController.pauseScanning();
                 }
               },
               backgroundColor: scannerController.isScanning.isFalse
@@ -58,19 +58,11 @@ class ScannerPage extends StatelessWidget {
         title: Text(discoveredDevice.name),
         subtitle: Text("Rssi: ${discoveredDevice.rssi}"),
         onTap: () {
+          Get.lazyPut<DiscoveredDevice>(() => (discoveredDevice));
           scannerController.stopScanning();
-          Get.to(() => DetailsScreen(device: discoveredDevice));
+          Get.to(() => DetailsScreen());
         },
       ),
-    );
-  }
-
-  SnackbarController _showSnackbar(DiscoveredDevice discoveredDevice) {
-    return Get.snackbar(
-      "You have clicked",
-      discoveredDevice.name,
-      icon: const Icon(Icons.devices, color: Colors.white),
-      snackPosition: SnackPosition.BOTTOM,
     );
   }
 }

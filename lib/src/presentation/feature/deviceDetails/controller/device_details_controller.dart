@@ -14,34 +14,44 @@ import '../../../../domain/entities/characteristics.dart';
 import '../../../../domain/entities/device_reading.dart';
 
 class DeviceDetailsController extends GetxController {
-  final ConnectToDeviceUseCase _connectToDeviceUseCase =
-      Get.find<ConnectToDeviceUseCase>();
-  final SetDateUseCase _setDateUseCase = Get.find<SetDateUseCase>();
-  final ReadDataUseCase _readDataUseCase = Get.find<ReadDataUseCase>();
-  final GetLastReadingUseCase _getLastReadingUseCase =
-      Get.find<GetLastReadingUseCase>();
-  final GetCountNotSynchronizedUseCase _getCountNotSynchronizedUseCase =
-      Get.find<GetCountNotSynchronizedUseCase>();
-  final SendDataUseCase _sendDataUseCase = Get.find<SendDataUseCase>();
-  final GetCharacteristicsPerDay _getCharacteristicsPerDay =
-      Get.find<GetCharacteristicsPerDay>();
-  final GetReadingsByDayUseCase _getReadingsByDayUseCase =
-      Get.find<GetReadingsByDayUseCase>();
-  late final DiscoveredDevice _discoveredDevice;
+  late ConnectToDeviceUseCase _connectToDeviceUseCase;
+  late SetDateUseCase _setDateUseCase;
+  late ReadDataUseCase _readDataUseCase;
+  late GetLastReadingUseCase _getLastReadingUseCase;
+  late GetCountNotSynchronizedUseCase _getCountNotSynchronizedUseCase;
+  late SendDataUseCase _sendDataUseCase;
+  late GetCharacteristicsPerDay _getCharacteristicsPerDay;
+  late GetReadingsByDayUseCase _getReadingsByDayUseCase;
   final String _dateService = "fd8136b0-f18f-4f36-ad03-c73311525a80";
   final String _dateCharacteristic = "fd8136b1-f18f-4f36-ad03-c73311525a80";
   final String _readingsService = "fd8136c0-f18f-4f36-ad03-c73311525a80";
   final String _readingsCharacteristic = "fd8136c1-f18f-4f36-ad03-c73311525a80";
   final _isConnected = false.obs;
-  final Rxn<ConnectionStateUpdate> _connectionState = Rxn();
+  final Rxn<ConnectionStateUpdate> _connectionState =
+      Rxn<ConnectionStateUpdate>();
   Rxn<DeviceReading> lastReading = Rxn<DeviceReading>();
   Rx<int> countNotSynchronized = Rx<int>(0);
   Rx<List<Characteristics>> characteristicsPerDay =
       Rx<List<Characteristics>>(List.empty());
   Rx<List<DeviceReading>> readingsByDay = Rx<List<DeviceReading>>(List.empty());
 
-  DeviceDetailsController({required DiscoveredDevice discoveredDevice}) {
-    _discoveredDevice = discoveredDevice;
+  DeviceDetailsController(
+      {required ConnectToDeviceUseCase connectToDeviceUseCase,
+      required SetDateUseCase setDateUseCase,
+      required ReadDataUseCase readDataUseCase,
+      required GetLastReadingUseCase getLastReadingUseCase,
+      required GetCountNotSynchronizedUseCase getCountNotSynchronizedUseCase,
+      required SendDataUseCase sendDataUseCase,
+      required GetCharacteristicsPerDay getCharacteristicsPerDay,
+      required GetReadingsByDayUseCase getReadingsByDayUseCase}) {
+    _getReadingsByDayUseCase = getReadingsByDayUseCase;
+    _getCharacteristicsPerDay = getCharacteristicsPerDay;
+    _getCountNotSynchronizedUseCase = getCountNotSynchronizedUseCase;
+    _sendDataUseCase = sendDataUseCase;
+    _setDateUseCase = setDateUseCase;
+    _readDataUseCase = readDataUseCase;
+    _connectToDeviceUseCase = connectToDeviceUseCase;
+    _getLastReadingUseCase = getLastReadingUseCase;
   }
 
   @override
@@ -60,14 +70,23 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _connectToDevice() {
-    _connectToDeviceUseCase.invoke(params: _discoveredDevice).fold(
-        (left) => Fimber.d("_connectToDevice ${left.message}"),
-        (right) => _connectionState.bindStream(right));
-    _handleConnectionState();
+    final discoveredDevice = Get.find<DiscoveredDevice>();
+    Fimber.d("_connectToDevice");
+    _connectToDeviceUseCase
+        .invoke(params: discoveredDevice)
+        .fold((left) => Fimber.d("_connectToDevice ${left.message}"), (right) {
+      Fimber.d("Stream is going to be bound");
+      _connectionState.bindStream(right);
+      Fimber.d(
+          "_connectToDevice stream is bound. Value is ${_connectionState.value}");
+      Fimber.d("Discovered device is $discoveredDevice");
+      _handleConnectionState();
+    });
   }
 
-  _handleConnectionState() async {
-    _connectionState.listen((connectionState) async {
+  _handleConnectionState() {
+    Fimber.d("_handleConnectionState");
+    _connectionState.listen((connectionState) {
       switch (connectionState!.connectionState) {
         case DeviceConnectionState.connecting:
           {
@@ -78,7 +97,7 @@ class DeviceDetailsController extends GetxController {
           {
             Fimber.d("Connected to device");
             _isConnected(true);
-            await _handleDate();
+            _handleDate();
             _readData();
             break;
           }
@@ -100,20 +119,22 @@ class DeviceDetailsController extends GetxController {
   }
 
   _readData() async {
+    final discoveredDevice = Get.find<DiscoveredDevice>();
     final readingsCharacteristic = QualifiedCharacteristic(
         serviceId: Uuid.parse(_readingsService),
         characteristicId: Uuid.parse(_readingsCharacteristic),
-        deviceId: _discoveredDevice.id);
+        deviceId: discoveredDevice.id);
     final result = _readDataUseCase.invoke(params: readingsCharacteristic);
     result.fold((left) => Fimber.d(left.message),
         (right) => Fimber.d("Subscribed to device successfully"));
   }
 
   Future<void> _handleDate() async {
+    final discoveredDevice = Get.find<DiscoveredDevice>();
     final dateCharacteristic = QualifiedCharacteristic(
         serviceId: Uuid.parse(_dateService),
         characteristicId: Uuid.parse(_dateCharacteristic),
-        deviceId: _discoveredDevice.id);
+        deviceId: discoveredDevice.id);
     if (_isConnected.isTrue) {
       final result = await _setDateUseCase.invoke(params: dateCharacteristic);
       result.fold((left) => Fimber.d(left.message),

@@ -8,7 +8,7 @@ import 'package:uber_app_flutter/src/domain/entities/device_reading.dart';
 import '../../core/failure/failure.dart';
 
 abstract class DeviceDetailsRepository {
-  Either<Failure, void> readData(
+  Either<Failure, bool> readData(
       QualifiedCharacteristic qualifiedCharacteristic);
 
   Either<Failure, Stream<DeviceReading>> getLastReading();

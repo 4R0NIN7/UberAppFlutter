@@ -22,12 +22,13 @@ class DeviceDetailsRepositoryImpl implements DeviceDetailsRepository {
   late final Stream<List<int>> _readDataStream;
 
   @override
-  Either<Failure, void> readData(
+  Either<Failure, bool> readData(
       QualifiedCharacteristic qualifiedCharacteristic) {
     try {
       _readDataStream =
           _bleClient.subscribeToCharacteristic(qualifiedCharacteristic);
-      return (_handleReadings(qualifiedCharacteristic));
+      _handleReadings(qualifiedCharacteristic);
+      return const Right(true);
     } on Exception catch (error) {
       return Left(ConnectionFailure("$error"));
     }
@@ -110,13 +111,14 @@ class DeviceDetailsRepositoryImpl implements DeviceDetailsRepository {
   Either<Failure, Stream<ConnectionStateUpdate>> connectToDevice(
       DiscoveredDevice discoveredDevice) {
     try {
-      return Right(_bleClient.connectToAdvertisingDevice(
+      final connection = _bleClient.connectToAdvertisingDevice(
         id: discoveredDevice.id,
         withServices: [],
         prescanDuration: const Duration(seconds: 5),
         servicesWithCharacteristicsToDiscover: {},
         connectionTimeout: const Duration(seconds: 2),
-      ));
+      );
+      return Right(connection);
     } on Exception catch (error) {
       return Left(ConnectionFailure("$error"));
     }

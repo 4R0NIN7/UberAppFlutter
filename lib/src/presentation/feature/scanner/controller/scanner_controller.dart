@@ -59,8 +59,14 @@ class ScannerController extends GetxController {
     });
   }
 
-  void stopScanning() {
+  void pauseScanning() {
     streamSubscription.pause();
+    discoveredDevices.clear();
+    isScanning(false);
+  }
+
+  void stopScanning() {
+    _discoveredDevice.close();
     discoveredDevices.clear();
     isScanning(false);
   }
