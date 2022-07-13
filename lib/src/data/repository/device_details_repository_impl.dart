@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:either_dart/either.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
-import 'package:uber_app_flutter/src/api/api_client.dart';
 import 'package:uber_app_flutter/src/core/util/dateManagement/time_manager.dart';
 import 'package:uber_app_flutter/src/domain/entities/characteristics.dart';
 import 'package:uber_app_flutter/src/domain/repositories/device_details_repository.dart';
@@ -12,10 +11,11 @@ import '../../../proto/Readings.pb.dart';
 import '../../core/failure/failure.dart';
 import '../../core/util/functions.dart';
 import '../../domain/entities/device_reading.dart';
+import '../datasources/api/api_client.dart';
 import '../datasources/localsource/database/database.dart';
 
 class DeviceDetailsRepositoryImpl implements DeviceDetailsRepository {
-  final _apiClient = Get.find<FakeApiClient>();
+  final _apiClient = Get.find<ApiClient>();
   final _database = Get.find<MyDatabase>();
   final _bleClient = Get.find<FlutterReactiveBle>(tag: 'BleClient');
   final _timeManager = Get.find<TimeManager>();
