@@ -1,3 +1,4 @@
+import 'package:charts_painter/chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:uber_app_flutter/src/core/util/functions.dart';
@@ -9,6 +10,7 @@ import '../controller/device_details_controller.dart';
 class DetailsScreen extends StatelessWidget {
   DetailsScreen({Key? key}) : super(key: key);
   final deviceDetailsController = Get.find<DeviceDetailsController>();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -73,9 +75,34 @@ class DetailsScreen extends StatelessWidget {
         title: Text(characteristics.day.toDateString()),
         onTap: () {
           deviceDetailsController.getReadingsByDay(characteristics.day);
+          showModalBottomSheet<void>(
+              context: context,
+              builder: (BuildContext context) {
+                return _modalBottomSheetView(context);
+              });
         },
       ),
     );
+  }
+
+  Widget _modalBottomSheetView(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height - 200,
+      color: Colors.white,
+      child: Center(child: _chart()),
+    );
+  }
+
+  _chart() {
+    return Obx(() => Chart(
+          state: ChartState.line(
+            ChartData.fromList(
+              deviceDetailsController.readingsByDay.value
+                  .map((e) => BubbleValue<void>(e.temperature))
+                  .toList(),
+            ),
+          ),
+        ));
   }
 
   Widget _logOutView() {
