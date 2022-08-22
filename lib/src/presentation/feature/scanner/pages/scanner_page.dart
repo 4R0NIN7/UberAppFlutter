@@ -3,7 +3,7 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/values/ui_values.dart';
-import '../../deviceDetails/pages/device_details_screen.dart';
+import '../../deviceDetails/pages/device_details_page.dart';
 import '../controller/scanner_controller.dart';
 
 class ScannerPage extends StatelessWidget {
@@ -60,7 +60,7 @@ class ScannerPage extends StatelessWidget {
         onTap: () {
           Get.lazyPut<DiscoveredDevice>(() => (discoveredDevice));
           scannerController.stopScanning();
-          Get.to(() => DetailsScreen());
+          Get.to(() => DetailsPage());
         },
       ),
     );

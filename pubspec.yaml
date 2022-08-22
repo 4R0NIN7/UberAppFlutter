@@ -50,6 +50,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.8
   either_dart: ^0.1.4
   equatable: ^2.0.3
+  mockito: ^5.2.0
+  flutter_bloc: ^8.0.1
 
 
 dev_dependencies:
