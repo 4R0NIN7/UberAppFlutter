@@ -14,6 +14,11 @@ import '../../../../domain/entities/characteristics.dart';
 import '../../../../domain/entities/device_reading.dart';
 
 class DeviceDetailsController extends GetxController {
+  final String _dateService = "fd8136b0-f18f-4f36-ad03-c73311525a80";
+  final String _dateCharacteristic = "fd8136b1-f18f-4f36-ad03-c73311525a80";
+  final String _readingsService = "fd8136c0-f18f-4f36-ad03-c73311525a80";
+  final String _readingsCharacteristic = "fd8136c1-f18f-4f36-ad03-c73311525a80";
+
   late ConnectToDeviceUseCase _connectToDeviceUseCase;
   late SetDateUseCase _setDateUseCase;
   late ReadDataUseCase _readDataUseCase;
@@ -22,10 +27,7 @@ class DeviceDetailsController extends GetxController {
   late SendDataUseCase _sendDataUseCase;
   late GetCharacteristicsPerDay _getCharacteristicsPerDay;
   late GetReadingsByDayUseCase _getReadingsByDayUseCase;
-  final String _dateService = "fd8136b0-f18f-4f36-ad03-c73311525a80";
-  final String _dateCharacteristic = "fd8136b1-f18f-4f36-ad03-c73311525a80";
-  final String _readingsService = "fd8136c0-f18f-4f36-ad03-c73311525a80";
-  final String _readingsCharacteristic = "fd8136c1-f18f-4f36-ad03-c73311525a80";
+
   final _isConnected = false.obs;
   final Rxn<ConnectionStateUpdate> _connectionState =
       Rxn<ConnectionStateUpdate>();
@@ -194,5 +196,13 @@ class DeviceDetailsController extends GetxController {
             (right) => Fimber.d("Data has been sent"));
       }
     });
+  }
+
+  logout() {
+    readingsByDay.close();
+    countNotSynchronized.close();
+    characteristicsPerDay.close();
+    _connectionState.close();
+    Fimber.d("Disconnected from device!");
   }
 }
