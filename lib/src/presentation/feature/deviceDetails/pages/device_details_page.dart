@@ -40,7 +40,6 @@ class DetailsPage extends StatelessWidget {
         bottom: const TabBar(tabs: [
           Tab(icon: Icon(Icons.on_device_training)),
           Tab(icon: Icon(Icons.area_chart)),
-          Tab(icon: Icon(Icons.logout))
         ]));
   }
 
